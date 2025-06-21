@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://fb-reel-downloader.onrender.com/sitemap.xml

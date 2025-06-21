@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Instagram Video Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+        }
+        
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .thumbnail-container {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .play-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .play-button i {
+            color: #3B82F6;
+            font-size: 24px;
+            margin-left: 5px;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <div id="navbar">
+        <nav class="bg-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex-shrink-0">
+                        <a href="#" class="text-2xl font-bold text-gray-800">Logo</a>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#" class="text-gray-600 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">About</a>
+                            <a href="#" class="text-gray-600 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Contact</a>
+                        </div>
+                    </div>
+                    <div class="-mr-2 flex md:hidden">
+                        <button type="button" class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                            <span class="sr-only">Open main menu</span>
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    <div class="loader" id="loader">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+            <p class="text-gray-700">Processing your video...</p>
+        </div>
+    </div>
+
+    <main class="container mx-auto px-4 py-8 sm:py-16">
+        <div class="max-w-2xl mx-auto text-center">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 mb-6">Instagram Reel and Video Downloader</h1>
+            <form id="downloadForm" class="form-container w-full" onsubmit="handleDownload(event)">
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <input type="url" name="url" placeholder="Paste Instagram video link here..." required class="flex-grow w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button type="submit" class="w-full sm:w-auto px-6 py-3 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300">Download</button>
+                </div>
+            </form>
+            
+            <!-- Video Preview Section -->
+            <div id="videoPreview" class="mt-8 hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4 text-left" id="videoTitle"></h2>
+                    
+                    <!-- Thumbnail with play button (shown before video loads) -->
+                    <div id="thumbnailContainer" class="thumbnail-container rounded-lg overflow-hidden mb-4">
+                        <img id="videoThumbnail" src="" alt="Video thumbnail" class="w-full rounded-lg">
+                        <div class="play-button" onclick="playVideo()">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Actual video player (hidden initially) -->
+                    <div id="videoPlayerContainer" class="video-container hidden">
+                        <video id="videoPlayer" controls class="w-full rounded-lg">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    
+                    <!-- Video info and download buttons -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center mt-4">
+                        <div class="text-gray-600 mb-2 sm:mb-0">
+                            <span id="videoDuration" class="mr-4"></span>
+                            <span id="videoResolution"></span>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <button onclick="downloadVideo()" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-300">
+                                <i class="fas fa-download mr-2"></i> Download Video
+                            </button>
+                            <div class="tooltip">
+                                <button id="audioDownloadBtn" onclick="downloadAudio()" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-300">
+                                    <i class="fas fa-music mr-2"></i> Download MP3
+                                </button>
+                                <span class="tooltiptext" id="audioTooltip">MP3 download requires FFmpeg on the server</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="errorMessage" class="mt-4 hidden">
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                    <span class="block sm:inline" id="errorText"></span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentVideoData = null;
+        
+        function showLoader() {
+            document.getElementById('loader').style.display = 'flex';
+        }
+        
+        function hideLoader() {
+            document.getElementById('loader').style.display = 'none';
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+        
+        function formatDuration(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        }
+        
+        function playVideo() {
+            const thumbnailContainer = document.getElementById('thumbnailContainer');
+            const videoPlayerContainer = document.getElementById('videoPlayerContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            
+            thumbnailContainer.classList.add('hidden');
+            videoPlayerContainer.classList.remove('hidden');
+            videoPlayer.src = currentVideoData.video_url;
+            videoPlayer.play();
+        }
+        
+        function updateAudioButtonVisibility() {
+            const audioBtn = document.getElementById('audioDownloadBtn');
+            const audioTooltip = document.getElementById('audioTooltip');
+            
+            if (currentVideoData && currentVideoData.ffmpeg_available === false) {
+                audioBtn.disabled = true;
+                audioBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                audioTooltip.textContent = 'Audio download unavailable (FFmpeg not installed on server)';
+            } else {
+                audioBtn.disabled = false;
+                audioBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                audioTooltip.textContent = 'Download audio as MP3';
+            }
+        }
+        
+        async function downloadVideo() {
+            if (!currentVideoData) return;
+            
+            showLoader();
+            
+            try {
+                // Create a form to submit the download request
+                const form = document.createElement('form');
+                form.method = 'GET';
+                form.action = '/direct-download';
+                
+                // Add video URL parameter
+                const urlInput = document.createElement('input');
+                urlInput.type = 'hidden';
+                urlInput.name = 'video_url';
+                urlInput.value = currentVideoData.video_url;
+                form.appendChild(urlInput);
+                
+                // Add filename parameter
+                const filenameInput = document.createElement('input');
+                filenameInput.type = 'hidden';
+                filenameInput.name = 'filename';
+                filenameInput.value = currentVideoData.filename;
+                form.appendChild(filenameInput);
+                
+                // Submit the form
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+            } catch (error) {
+                showError('Failed to download video. Please try again.');
+                console.error('Download error:', error);
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        async function downloadAudio() {
+            if (!currentVideoData) return;
+            
+            showLoader();
+            
+            try {
+                // Create a form to submit the download request
+                const form = document.createElement('form');
+                form.method = 'GET';
+                form.action = '/direct-download';
+                
+                // Add video URL parameter
+                const urlInput = document.createElement('input');
+                urlInput.type = 'hidden';
+                urlInput.name = 'video_url';
+                urlInput.value = currentVideoData.video_url;
+                form.appendChild(urlInput);
+                
+                // Add filename parameter
+                const filenameInput = document.createElement('input');
+                filenameInput.type = 'hidden';
+                filenameInput.name = 'filename';
+                filenameInput.value = currentVideoData.filename;
+                form.appendChild(filenameInput);
+                
+                // Add audio flag
+                const audioInput = document.createElement('input');
+                audioInput.type = 'hidden';
+                audioInput.name = 'audio';
+                audioInput.value = 'true';
+                form.appendChild(audioInput);
+                
+                // Submit the form
+                document.body.appendChild(form);
+                form.submit();
+                document.body.removeChild(form);
+            } catch (error) {
+                showError('Failed to download audio. Please try again.');
+                console.error('Download error:', error);
+            } finally {
+                hideLoader();
+            }
+        }
+        
+        async function handleDownload(event) {
+            event.preventDefault();
+            showLoader();
+            
+            // Hide previous results and errors
+            document.getElementById('videoPreview').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const url = formData.get('url');
+            
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `url=${encodeURIComponent(url)}`
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentVideoData = data;
+                    
+                    // Show the video preview section
+                    const videoPreview = document.getElementById('videoPreview');
+                    const videoTitle = document.getElementById('videoTitle');
+                    const videoThumbnail = document.getElementById('videoThumbnail');
+                    const videoDuration = document.getElementById('videoDuration');
+                    const videoResolution = document.getElementById('videoResolution');
+                    
+                    // Set video info
+                    videoTitle.textContent = data.title;
+                    videoThumbnail.src = data.thumbnail || 'https://via.placeholder.com/800x450';
+                    videoDuration.textContent = data.duration ? `Duration: ${formatDuration(data.duration)}` : '';
+                    videoResolution.textContent = data.width && data.height ? `Resolution: ${data.width}x${data.height}` : '';
+                    
+                    // Update audio button visibility
+                    updateAudioButtonVisibility();
+                    
+                    // Reset video player state
+                    document.getElementById('thumbnailContainer').classList.remove('hidden');
+                    document.getElementById('videoPlayerContainer').classList.add('hidden');
+                    document.getElementById('videoPlayer').src = '';
+                    
+                    // Show the preview
+                    videoPreview.classList.remove('hidden');
+                } else {
+                    showError(data.error || 'An unknown error occurred');
+                }
+            } catch (error) {
+                showError('Failed to connect to the server. Please try again.');
+                console.error('Error:', error);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        window.onload = function() {
+            document.getElementById('loader').style.display = 'none';
+        };
+    </script>
+</body>
+
+</html>
