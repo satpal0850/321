@@ -216,4 +216,4 @@ if __name__ == '__main__':
     if not FFMPEG_AVAILABLE:
         print("Warning: FFmpeg not found. Audio downloads will not be available.")
     print("Open your browser and go to http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=10000)
